@@ -1,0 +1,3 @@
+[submodule "enttec-usb-dmx-pro"]
+	path = enttec-usb-dmx-pro
+	url = git@github.com:BRLighthouse/enttec-usb-dmx-pro.git
