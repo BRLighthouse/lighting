@@ -1,0 +1,13 @@
+- name: baseline
+  hosts: all
+  remote_user: pi
+  become: yes
+  roles:
+    - common
+
+- name: application
+  hosts: lamp
+  remote_user: pi
+  become: yes
+  roles:
+    - lamp
