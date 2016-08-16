@@ -1,13 +1,84 @@
 - name: baseline
   hosts: all
-  remote_user: pi
   become: yes
-  roles:
-    - common
+  remote_user: pi
 
-- name: application
-  hosts: lamp
-  remote_user: pi
+  vars:
+    repository: https://github.com/BRLighthouse/lighthouse_lamp.git
+
+  tasks:
+  # Ansible tries to mkdir before running tasks, so this doesn't work:
+  #- name: mount rw
+  #  shell: mount -o remount,rw /
+
+# basic setup
+
+  - apt: update_cache=yes cache_valid_time=86400
+  - name: install deps
+    apt: name={{ item }} state=present
+    with_items:
+    - python
+    - python-pip
+    - curl
+    - git
+    - gcc
+    - python-dev
+    - python-avahi
+    - avahi-daemon # should already be installed but be explicit
+  - name: update pip # required for 'pip install --pre'
+    shell: pip install --upgrade pip
+
+# application setup
+
+  - name: clone repo
+    git: repo={{ repository }} dest=/var/lib/lamp accept_hostkey=true force=true
+  - name: install pip depedencies
+    shell: pip install --pre -U -r /var/lib/lamp/requirements.txt
+
+- name: read-only root for raspberry pi 2
+  hosts: none
   become: yes
-  roles:
-    - lamp
+  remote_user: pi
+
+  tasks:
+# RO root config
+# https://hallard.me/raspberry-pi-read-only/
+
+  - apt: name={{ item }} state=removed
+    with_items:
+    - wolfram-engine
+    - triggerhappy
+    - anacron
+    - logrotate
+    #- dbus # needed for ansible
+    - dphys-swapfile
+    - xserver-common
+    - lightdm
+  - apt: name={{item}} state=present
+    with_items:
+    - busybox-syslogd
+  - name: replace log mgmt with busybox
+    apt: name=rsyslog state=removed
+
+  # TODO disable swap by editing /boot/cmdline.txt
+  # needs troubleshooting though, as pi fails to boot with RO specified
+
+  # TODO fixup /etc/fstab to have ro and tmpfs mounts - see fstab.patch file
+
+  #- shell: rm -rf /var/lib/dhcp/ /var/run /var/spool /var/lock
+  - name: force rm links
+    file: dest={{item}} state=removed force=yes
+    with_items:
+    - /var/lib/dhcp/
+    - /var/run
+    - /var/spool
+    - /var/lock
+
+  - name: link
+    file: src=/tmp dest={{item}} state=link force=yes
+    with_items:
+    - /var/lib/dhcp/
+    - /var/run
+    - /var/spool
+    - /var/lock
+
