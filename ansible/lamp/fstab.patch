@@ -1,0 +1,17 @@
+--- fstab.orig	2016-08-06 12:12:52.489355773 +0000
++++ fstab.new	2016-08-06 12:13:19.809250662 +0000
+@@ -1,5 +1,9 @@
+-proc            /proc           proc    defaults          0       0
+-/dev/mmcblk0p1  /boot           vfat    defaults          0       2
+-/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
+-# a swapfile is not a swap partition, no line here
+-#   use  dphys-swapfile swap[on|off]  for that
++proc            /proc           proc    defaults             0       0
++/dev/mmcblk0p1  /boot           vfat    defaults,ro          0       2
++/dev/mmcblk0p2  /               ext4    defaults,noatime,ro  0       1
++ 
++# For Debian Jessie 
++tmpfs           /tmp            tmpfs   nosuid,nodev         0       0
++tmpfs           /var/log        tmpfs   nosuid,nodev         0       0
++tmpfs           /var/tmp        tmpfs   nosuid,nodev         0       0
++
